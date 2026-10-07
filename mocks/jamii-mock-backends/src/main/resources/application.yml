@@ -22,6 +22,15 @@ management:
       probes:
         enabled: true
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    display-request-duration: true
+  paths-to-match: /customers/**
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{correlationId:-system}] %-24logger{24} %msg%n"

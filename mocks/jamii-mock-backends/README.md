@@ -6,6 +6,7 @@ Spring Boot service that stands in for Jamii Savings' **customer system (REST/JS
 - Docker image built with a multi-stage Dockerfile; run with its own `docker-compose.yml`
 - All data is synthetic
 - Structured request/response logging with correlation IDs and PII masking
+- Swagger UI for the REST endpoint; WSDL for the SOAP endpoint
 
 ## Endpoints
 
@@ -14,6 +15,8 @@ Spring Boot service that stands in for Jamii Savings' **customer system (REST/JS
 | `GET /customers/{customerId}` | Customer record (REST/JSON) |
 | `POST /ws` (`CheckEligibilityRequest`) | Credit check (SOAP 1.1) |
 | `GET /ws/creditCheck.wsdl` | WSDL |
+| `GET /swagger-ui.html` | Swagger UI for the customer REST API |
+| `GET /v3/api-docs` | OpenAPI 3 spec for the customer REST API |
 | `GET /actuator/health` | Health check |
 
 Every response carries `Server`, `X-Powered-By` and `X-Internal-*` headers, as a real backend might. MI must strip them.
@@ -73,6 +76,7 @@ java -jar target/jamii-mock-backends.jar
 docker compose up -d --build
 curl http://localhost:8081/customers/1001
 curl http://localhost:8081/ws/creditCheck.wsdl
+# Swagger UI: http://localhost:8081/swagger-ui.html
 ```
 
 The integration stack joins the `jamii-shared` network and calls `http://jamii-mock-backends:8080`. When deployed elsewhere, point MI's `CUSTOMER_BACKEND_URL` and `CREDIT_BACKEND_URL` at the deployed host.

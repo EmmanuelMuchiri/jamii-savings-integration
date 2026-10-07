@@ -31,7 +31,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
  * <p>Correlation: reuses the caller's X-Correlation-ID (MI sends one) or generates one,
  * puts it in the MDC so every log line carries it, and echoes it in the response.</p>
  * <p>Sensitive headers are masked and PII in bodies is masked (see {@link LogMasker}).
- * Actuator calls (health checks) are not logged.</p>
+ * Actuator, Swagger UI and OpenAPI calls are not logged.</p>
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -53,7 +53,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/actuator");
+        String uri = request.getRequestURI();
+        return uri.startsWith("/actuator") || uri.startsWith("/swagger-ui") || uri.startsWith("/v3/api-docs");
     }
 
     @Override
