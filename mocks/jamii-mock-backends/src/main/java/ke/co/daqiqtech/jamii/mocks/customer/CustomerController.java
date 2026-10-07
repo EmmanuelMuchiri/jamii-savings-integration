@@ -1,6 +1,12 @@
 package ke.co.daqiqtech.jamii.mocks.customer;
 
-import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/customers")
+@Tag(name = "Customers", description = "Mock customer system (REST/JSON). Test IDs trigger each error path.")
 public class CustomerController {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerController.class);
@@ -38,12 +45,26 @@ public class CustomerController {
         this.slowDelayMs = slowDelayMs;
     }
 
+    @Operation(
+            summary = "Get a customer by ID",
+            description = "1001-1005 return a record. 9999 (or any unknown ID) returns 404. "
+                    + "5000 returns 500. 5004 answers after 7 s, longer than MI's 5 s timeout.")
+    @ApiResponse(responseCode = "200", description = "Customer found",
+            content = @Content(schema = @Schema(implementation = Customer.class)))
+    @ApiResponse(responseCode = "404", description = "Unknown customer (try 9999)",
+            content = @Content(schema = @Schema(implementation = ApiMessage.class),
+                    examples = @ExampleObject(value = "{\"message\":\"Customer not found\"}")))
+    @ApiResponse(responseCode = "500", description = "Simulated customer-system failure (try 5000)",
+            content = @Content(schema = @Schema(implementation = ApiMessage.class),
+                    examples = @ExampleObject(value = "{\"message\":\"Internal error in customer system\"}")))
     @GetMapping("/{customerId}")
-    public ResponseEntity<?> getCustomer(@PathVariable String customerId) throws InterruptedException {
+    public ResponseEntity<?> getCustomer(
+            @Parameter(description = "Customer ID: 1001-1005, 9999 (404), 5000 (500), 5004 (slow)", example = "1001")
+            @PathVariable String customerId) throws InterruptedException {
         if (SERVER_ERROR_ID.equals(customerId)) {
             log.warn("RULE customer={} -> simulated 500 (MI should map to 502)", customerId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Internal error in customer system"));
+                    .body(new ApiMessage("Internal error in customer system"));
         }
         if (SLOW_ID.equals(customerId)) {
             log.warn("RULE customer={} -> delaying {} ms (MI should time out and return 504)", customerId, slowDelayMs);
@@ -57,7 +78,7 @@ public class CustomerController {
                 })
                 .orElseGet(() -> {
                     log.info("LOOKUP customer={} -> not found (404)", customerId);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Customer not found"));
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiMessage("Customer not found"));
                 });
     }
 }
