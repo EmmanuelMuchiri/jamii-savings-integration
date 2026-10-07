@@ -1,0 +1,21 @@
+# Mock backends, built and run separately from the integration stack.
+#   docker compose up -d --build
+# Creates the shared network "jamii-shared"; the integration stack joins it,
+# so MI reaches this service at http://jamii-mock-backends:8080.
+name: jamii-mocks
+
+services:
+  mock-backends:
+    build: .
+    image: ${REGISTRY:-localhost:5000}/jamii/mock-backends:${TAG:-local}
+    container_name: jamii-mock-backends
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms128m
+    ports:
+      - "${MOCK_HOST_PORT:-8081}:8080"
+    restart: unless-stopped
+    networks: [jamii-shared]
+
+networks:
+  jamii-shared:
+    name: jamii-shared
