@@ -1,0 +1,10 @@
+---
+key: "BalanceAPI-1.0.0"
+name : "BalanceAPI"
+displayName : "BalanceAPI"
+description: "BalanceAPI"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/balanceapi"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
