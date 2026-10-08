@@ -1,9 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<api context="/balanceapi" name="BalanceAPI" xmlns="http://ws.apache.org/ns/synapse">
-    <resource methods="GET" uri-template="/">
+<!-- 1a. GET /accounts/{accountNumber}/balance, backed by AccountsDataService (H2).
+     200 envelope; 400 bad format; 404 unknown account; 503 DB_UNAVAILABLE when the data service fails. -->
+<api name="BalanceAPI" context="/accounts" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/{accountNumber}/balance" faultSequence="Common_FaultSeq">
         <inSequence>
+            <property name="apiName" value="BalanceAPI" scope="default" type="STRING"/>
+            <sequence key="Common_InSeq"/>
+            <sequence key="Common_HeaderHygiene"/>
+            <property name="maskedAccount" expression="concat('******', substring($ctx:uri.var.accountNumber, string-length($ctx:uri.var.accountNumber) - 3))" scope="default" type="STRING"/>
+            <call-template target="Common_MaskedLog">
+                <with-param name="stage" value="REQUEST_IN"/>
+                <with-param name="detail" value="{concat('method=GET account=', get-property('maskedAccount'))}"/>
+            </call-template>
+            <filter source="$ctx:uri.var.accountNumber" regex="[0-9]{10,16}">
+                <then>
+                    <call-template target="Common_MaskedLog">
+                        <with-param name="stage" value="BACKEND_CALL"/>
+                        <with-param name="detail" value="{concat('backend=AccountsDataService account=', get-property('maskedAccount'))}"/>
+                    </call-template>
+                    <property name="REST_URL_POSTFIX" scope="axis2" action="remove"/>
+                    <header name="Accept" scope="transport" value="application/xml"/>
+                    <call>
+                        <endpoint key="AccountsDataServiceEP"/>
+                    </call>
+                    <filter source="$axis2:HTTP_SC" regex="200">
+                        <then>
+                            <filter xpath="count(//acc:Account) = 0" xmlns:acc="http://jamii.daqiqtech.co.ke/accounts">
+                                <then>
+                                    <call-template target="Common_ErrorResponse">
+                                        <with-param name="httpStatus" value="404"/>
+                                        <with-param name="code" value="ACCOUNT_NOT_FOUND"/>
+                                        <with-param name="message" value="No account exists for the supplied account number."/>
+                                    </call-template>
+                                </then>
+                                <else>
+                                    <property name="respTimestamp" expression="get-property('SYSTEM_DATE', &quot;yyyy-MM-dd'T'HH:mm:ss.SSS'Z'&quot;)" scope="default" type="STRING"/>
+                                    <payloadFactory media-type="json">
+                                        <format>{"accountNumber":"$1","status":"$2","balance":{"amount":$3,"currency":"$4"},"requestId":"$5","timestamp":"$6"}</format>
+                                        <args>
+                                            <arg evaluator="xml" expression="string(//acc:Account/acc:accountNumber)" xmlns:acc="http://jamii.daqiqtech.co.ke/accounts"/>
+                                            <arg evaluator="xml" expression="string(//acc:Account/acc:status)" xmlns:acc="http://jamii.daqiqtech.co.ke/accounts"/>
+                                            <arg evaluator="xml" expression="string(//acc:Account/acc:balance)" xmlns:acc="http://jamii.daqiqtech.co.ke/accounts"/>
+                                            <arg evaluator="xml" expression="string(//acc:Account/acc:currency)" xmlns:acc="http://jamii.daqiqtech.co.ke/accounts"/>
+                                            <arg evaluator="xml" expression="get-property('correlationId')"/>
+                                            <arg evaluator="xml" expression="get-property('respTimestamp')"/>
+                                        </args>
+                                    </payloadFactory>
+                                    <property name="TRANSPORT_HEADERS" scope="axis2" action="remove"/>
+                                    <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+                                    <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+                                    <header name="X-Correlation-ID" scope="transport" expression="get-property('correlationId')"/>
+                                    <call-template target="Common_MaskedLog">
+                                        <with-param name="stage" value="RESPONSE_OUT"/>
+                                        <with-param name="detail" value="{concat('httpStatus=200 account=', get-property('maskedAccount'), ' latencyMs=', get-property('SYSTEM_TIME') - get-property('startTime'))}"/>
+                                    </call-template>
+                                    <respond/>
+                                </else>
+                            </filter>
+                        </then>
+                        <else>
+                            <!-- The data service answers 500 when the database is down or the query fails -->
+                            <log level="custom" category="ERROR">
+                                <property name="stage" value="BACKEND_ERROR"/>
+                                <property name="api" value="BalanceAPI"/>
+                                <property name="correlationId" expression="get-property('correlationId')"/>
+                                <property name="backendStatus" expression="$axis2:HTTP_SC"/>
+                            </log>
+                            <call-template target="Common_ErrorResponse">
+                                <with-param name="httpStatus" value="503"/>
+                                <with-param name="code" value="DB_UNAVAILABLE"/>
+                                <with-param name="message" value="The account service is temporarily unavailable."/>
+                            </call-template>
+                        </else>
+                    </filter>
+                </then>
+                <else>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="accountNumber"/>
+                        <with-param name="issue" value="must be 10 to 16 digits"/>
+                    </call-template>
+                </else>
+            </filter>
         </inSequence>
-        <faultSequence>
-        </faultSequence>
     </resource>
 </api>

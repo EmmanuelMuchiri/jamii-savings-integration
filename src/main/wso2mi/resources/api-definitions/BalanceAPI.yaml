@@ -4,10 +4,16 @@ info:
   description: API Definition of BalanceAPI
   version: 1.0.0
 servers:
-- url: http://localhost:8290/balanceapi
+- url: http://localhost:8290/accounts
 paths:
-  /:
+  /{accountNumber}/balance:
     get:
+      parameters:
+      - name: accountNumber
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         default:
           description: Default response
