@@ -16,7 +16,7 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 ![Architecture](docs/diagrams/architecture.png)
 
-Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.3.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.3.pdf)
+Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.4.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.4.pdf)
 
 ## Backend choices
 
@@ -84,6 +84,19 @@ TODO: apictl import steps, token generation, sample calls.
 | `templates/Common_ErrorResponse.xml` | Standard error body, status, correlation header |
 | `templates/Common_MaskedLog.xml` | One masked log line per stage |
 | `data-services/AccountsDataService.dbs` | Parameterised query; DB settings from environment |
+
+## Run API Manager locally
+
+1. Put `wso2am-4.4.0.zip` in `dist/` and refresh the checksums: `cd dist && sha256sum wso2mi-4.3.0.zip wso2am-4.4.0.zip > checksums.txt`
+2. Set `APIM_VERSION=4.4.0`, `APIM_ADMIN_USER` and `APIM_ADMIN_PASSWORD` in `.env`.
+3. Build (the build log shows what the branding step changed), then start:
+   ```bash
+   docker compose build --progress=plain apim 2>&1 | grep configure:
+   docker compose -f docker-compose.yml -f docker-compose.debug.yml --profile core up -d apim
+   ```
+4. Open the Developer Portal at https://localhost:9443/devportal and the Publisher at https://localhost:9443/publisher (self-signed certificate warning expected).
+
+**Branding.** `docker/apim/branding/` holds the Jamii Savings theme: logos (full colour and white), favicon, landing banners, and theme overrides for the Developer Portal (`userTheme.js`), Publisher and Admin Portal (`userCustomThemes.js`). Palette: navy `#102E62`, green `#3B9B4A`, light green `#5BBE61`, dark green `#2F7F3E`, white `#FFFFFF`.
 
 ## Postman collection
 

@@ -71,7 +71,8 @@ services:
     profiles: [core]
     build:
       context: ./docker/apim
-      <<: *build-common
+      additional_contexts:
+        dist: ./dist        # WSO2 zip, verified against dist/checksums.txt
       args:
         APIM_VERSION: ${APIM_VERSION}
         JAVA_BASE_IMAGE: ${WSO2_JAVA_BASE_IMAGE}
@@ -83,7 +84,9 @@ services:
     ports:
       - "9443:9443"   # Publisher, Developer Portal, Admin
       - "8243:8243"   # Gateway (HTTPS)
-    depends_on: [mi]
+    depends_on:
+      mi:
+        condition: service_healthy
     networks: [jamii-net]
 
   # ---------- observability (stretch) ----------

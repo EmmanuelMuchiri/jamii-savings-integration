@@ -10,10 +10,8 @@ ARG H2_VERSION=2.2.224
 RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
 WORKDIR /tmp/dist
 COPY --from=dist wso2mi-${MI_VERSION}.zip checksums.txt ./
-RUN grep " wso2mi-${MI_VERSION}.zip$" checksums.txt | sha256sum -c - \
- && unzip -q wso2mi-${MI_VERSION}.zip -d /opt \
- && mv /opt/wso2mi-${MI_VERSION} /opt/mi \
- && chmod +x /opt/mi/bin/*.sh
+COPY verify-unpack.sh /tmp/verify-unpack.sh
+RUN bash /tmp/verify-unpack.sh wso2mi-${MI_VERSION}.zip /opt/mi
 COPY configure.sh /tmp/configure.sh
 RUN bash /tmp/configure.sh /opt/mi
 # Must match the H2 server version in docker/h2 (TCP protocol compatibility)
