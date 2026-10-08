@@ -10,7 +10,7 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 > Status: work in progress. Sections marked TODO are completed during the build.
 
-## Architecture
+## WSO2 APIM
 
 ![Architecture](docs/diagrams/wso2_apim.png)
 
