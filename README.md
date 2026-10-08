@@ -12,6 +12,8 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 ## API Manager Branded
 
+![Devportal Home Page](docs/diagrams/devportal_branded.png)
+
 ![Devportal](docs/diagrams/pizza_schack_branded.png)
 
 ![PizzaShack](docs/diagrams/pizza_shack_deployed.png)
