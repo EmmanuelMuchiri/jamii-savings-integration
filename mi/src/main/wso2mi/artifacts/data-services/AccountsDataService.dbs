@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Accounts lookup for the Balance API. Parameterised query only; connection details are
+     injected from environment variables ($SYSTEM:...), never hard-coded. -->
+<data name="AccountsDataService" serviceNamespace="http://jamii.daqiqtech.co.ke/accounts" transports="http https">
+    <description>Account balance lookup (H2)</description>
+    <config id="JamiiAccountsDS">
+        <property name="driverClassName">org.h2.Driver</property>
+        <property name="url">$SYSTEM:H2_URL</property>
+        <property name="username">$SYSTEM:H2_USER</property>
+        <property name="password">$SYSTEM:H2_PASSWORD</property>
+        <property name="maxActive">10</property>
+        <property name="minIdle">1</property>
+        <property name="validationQuery">SELECT 1</property>
+        <property name="testOnBorrow">true</property>
+    </config>
+    <query id="getAccountByNumber" useConfig="JamiiAccountsDS">
+        <sql>SELECT account_number, status, balance, currency FROM accounts WHERE account_number = ?</sql>
+        <result element="Accounts" rowName="Account" defaultNamespace="http://jamii.daqiqtech.co.ke/accounts">
+            <element column="account_number" name="accountNumber" xsdType="string"/>
+            <element column="status" name="status" xsdType="string"/>
+            <element column="balance" name="balance" xsdType="decimal"/>
+            <element column="currency" name="currency" xsdType="string"/>
+        </result>
+        <param name="accountNumber" sqlType="STRING"/>
+    </query>
+    <resource method="GET" path="accounts/{accountNumber}">
+        <call-query href="getAccountByNumber">
+            <with-param name="accountNumber" query-param="accountNumber"/>
+        </call-query>
+    </resource>
+</data>
