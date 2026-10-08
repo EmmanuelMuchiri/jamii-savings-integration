@@ -1,0 +1,7 @@
+# Debug override: exposes MI's runtime port on localhost only, for the
+# Postman "MI direct" folder. Never use in shared or prod environments.
+#   docker compose -f docker-compose.yml -f docker-compose.debug.yml --profile core up -d
+services:
+  mi:
+    ports:
+      - "127.0.0.1:8290:8290"

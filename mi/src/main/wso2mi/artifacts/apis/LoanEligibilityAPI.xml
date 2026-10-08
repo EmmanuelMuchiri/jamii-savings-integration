@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 1c. POST /loans/eligibility: REST/JSON in front of the mock credit-check SOAP service.
+     JSON -> CheckEligibilityRequest (1:1 fields) -> CheckEligibilityResponse -> JSON.
+     soap:Client -> 422 ELIGIBILITY_REJECTED; soap:Server -> 502; timeout -> 504; unreachable -> 503.
+     SOAP XML never reaches the client. Amounts are never logged. -->
+<api name="LoanEligibilityAPI" context="/loans" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/eligibility" faultSequence="Common_FaultSeq">
+        <inSequence>
+            <property name="apiName" value="LoanEligibilityAPI" scope="default" type="STRING"/>
+            <sequence key="Common_InSeq"/>
+            <sequence key="Common_HeaderHygiene"/>
+            <!-- Reading the body here forces JSON parsing; malformed JSON goes to the fault sequence (400) -->
+            <property name="loan.customerId" expression="json-eval($.customerId)" scope="default" type="STRING"/>
+            <property name="loan.monthlyIncome" expression="json-eval($.monthlyIncome)" scope="default" type="STRING"/>
+            <property name="loan.existingMonthlyDebt" expression="json-eval($.existingMonthlyDebt)" scope="default" type="STRING"/>
+            <property name="loan.requestedMonthlyInstalment" expression="json-eval($.requestedMonthlyInstalment)" scope="default" type="STRING"/>
+            <call-template target="Common_MaskedLog">
+                <with-param name="stage" value="REQUEST_IN"/>
+                <with-param name="detail" value="{concat('method=POST customerId=', get-property('loan.customerId'))}"/>
+            </call-template>
+            <filter xpath="string-length(get-property('loan.customerId')) = 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="customerId"/>
+                        <with-param name="issue" value="is required"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="string-length(get-property('loan.monthlyIncome')) = 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="monthlyIncome"/>
+                        <with-param name="issue" value="is required"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="string-length(get-property('loan.existingMonthlyDebt')) = 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="existingMonthlyDebt"/>
+                        <with-param name="issue" value="is required"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="string-length(get-property('loan.requestedMonthlyInstalment')) = 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="requestedMonthlyInstalment"/>
+                        <with-param name="issue" value="is required"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="not(number(get-property('loan.monthlyIncome')) = number(get-property('loan.monthlyIncome'))) or number(get-property('loan.monthlyIncome')) &lt; 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="monthlyIncome"/>
+                        <with-param name="issue" value="must be a number of 0 or more"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="not(number(get-property('loan.existingMonthlyDebt')) = number(get-property('loan.existingMonthlyDebt'))) or number(get-property('loan.existingMonthlyDebt')) &lt; 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="existingMonthlyDebt"/>
+                        <with-param name="issue" value="must be a number of 0 or more"/>
+                    </call-template>
+                </then>
+            </filter>
+            <filter xpath="not(number(get-property('loan.requestedMonthlyInstalment')) = number(get-property('loan.requestedMonthlyInstalment'))) or number(get-property('loan.requestedMonthlyInstalment')) &lt; 0">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="requestedMonthlyInstalment"/>
+                        <with-param name="issue" value="must be a number of 0 or more"/>
+                    </call-template>
+                </then>
+            </filter>
+            <payloadFactory media-type="xml">
+                <format>
+                    <cr:CheckEligibilityRequest xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1">
+                        <cr:customerId>$1</cr:customerId>
+                        <cr:monthlyIncome>$2</cr:monthlyIncome>
+                        <cr:existingMonthlyDebt>$3</cr:existingMonthlyDebt>
+                        <cr:requestedMonthlyInstalment>$4</cr:requestedMonthlyInstalment>
+                    </cr:CheckEligibilityRequest>
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('loan.customerId')"/>
+                    <arg evaluator="xml" expression="get-property('loan.monthlyIncome')"/>
+                    <arg evaluator="xml" expression="get-property('loan.existingMonthlyDebt')"/>
+                    <arg evaluator="xml" expression="get-property('loan.requestedMonthlyInstalment')"/>
+                </args>
+            </payloadFactory>
+            <property name="REST_URL_POSTFIX" scope="axis2" action="remove"/>
+            <property name="HTTP_METHOD" value="POST" scope="axis2" type="STRING"/>
+            <property name="messageType" value="text/xml" scope="axis2" type="STRING"/>
+            <header name="Action" value="CheckEligibility"/>
+            <header name="To" expression="get-property('system', 'credit.backend.url')"/>
+            <call-template target="Common_MaskedLog">
+                <with-param name="stage" value="BACKEND_CALL"/>
+                <with-param name="detail" value="{concat('backend=CreditCheck operation=CheckEligibility customerId=', get-property('loan.customerId'))}"/>
+            </call-template>
+            <call>
+                <endpoint key="CreditBackendEP"/>
+            </call>
+            <filter xpath="count($body/*[local-name()='Fault']) &gt; 0">
+                <then>
+                    <property name="soapFaultCode" expression="string($body/*[local-name()='Fault']/faultcode)" scope="default" type="STRING"/>
+                    <property name="soapFaultString" expression="string($body/*[local-name()='Fault']/faultstring)" scope="default" type="STRING"/>
+                    <log level="custom" category="WARN">
+                        <property name="stage" value="SOAP_FAULT"/>
+                        <property name="api" value="LoanEligibilityAPI"/>
+                        <property name="correlationId" expression="get-property('correlationId')"/>
+                        <property name="faultCode" expression="get-property('soapFaultCode')"/>
+                        <property name="faultString" expression="get-property('soapFaultString')"/>
+                    </log>
+                    <filter xpath="contains(get-property('soapFaultCode'), 'Client')">
+                        <then>
+                            <filter xpath="starts-with(get-property('soapFaultString'), 'INVALID_INCOME')">
+                                <then>
+                                    <call-template target="Common_ErrorResponse">
+                                        <with-param name="httpStatus" value="422"/>
+                                        <with-param name="code" value="ELIGIBILITY_REJECTED"/>
+                                        <with-param name="message" value="Monthly income must be greater than zero."/>
+                                    </call-template>
+                                </then>
+                            </filter>
+                            <filter xpath="starts-with(get-property('soapFaultString'), 'CUSTOMER_BLACKLISTED')">
+                                <then>
+                                    <call-template target="Common_ErrorResponse">
+                                        <with-param name="httpStatus" value="422"/>
+                                        <with-param name="code" value="ELIGIBILITY_REJECTED"/>
+                                        <with-param name="message" value="Applicant is not eligible for credit."/>
+                                    </call-template>
+                                </then>
+                            </filter>
+                            <call-template target="Common_ErrorResponse">
+                                <with-param name="httpStatus" value="422"/>
+                                <with-param name="code" value="ELIGIBILITY_REJECTED"/>
+                                <with-param name="message" value="The application was rejected by the credit engine."/>
+                            </call-template>
+                        </then>
+                        <else>
+                            <call-template target="Common_ErrorResponse">
+                                <with-param name="httpStatus" value="502"/>
+                                <with-param name="code" value="BAD_GATEWAY"/>
+                                <with-param name="message" value="The credit service returned an error."/>
+                            </call-template>
+                        </else>
+                    </filter>
+                </then>
+            </filter>
+            <filter xpath="count(//cr:CheckEligibilityResponse) = 0" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="502"/>
+                        <with-param name="code" value="BAD_GATEWAY"/>
+                        <with-param name="message" value="The credit service returned an unexpected response."/>
+                    </call-template>
+                </then>
+            </filter>
+            <property name="loanDecision" expression="string(//cr:CheckEligibilityResponse/cr:decision)" scope="default" type="STRING" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+            <property name="respTimestamp" expression="get-property('SYSTEM_DATE', &quot;yyyy-MM-dd'T'HH:mm:ss.SSS'Z'&quot;)" scope="default" type="STRING"/>
+            <payloadFactory media-type="json">
+                <format>{"customerId":"$1","decision":"$2","eligible":$3,"debtToIncomePercent":$4,"maxAllowedPercent":$5,"creditReference":"$6","requestId":"$7","timestamp":"$8"}</format>
+                <args>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:customerId)" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:decision)" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:decision) = 'ELIGIBLE'" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:debtToIncomePercent)" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:maxAllowedPercent)" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="string(//cr:CheckEligibilityResponse/cr:referenceId)" xmlns:cr="http://jamii.daqiqtech.co.ke/credit/v1"/>
+                    <arg evaluator="xml" expression="get-property('correlationId')"/>
+                    <arg evaluator="xml" expression="get-property('respTimestamp')"/>
+                </args>
+            </payloadFactory>
+            <property name="TRANSPORT_HEADERS" scope="axis2" action="remove"/>
+            <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+            <property name="HTTP_SC" value="200" scope="axis2" type="STRING"/>
+            <header name="X-Correlation-ID" scope="transport" expression="get-property('correlationId')"/>
+            <call-template target="Common_MaskedLog">
+                <with-param name="stage" value="RESPONSE_OUT"/>
+                <with-param name="detail" value="{concat('httpStatus=200 customerId=', get-property('loan.customerId'), ' decision=', get-property('loanDecision'), ' latencyMs=', get-property('SYSTEM_TIME') - get-property('startTime'))}"/>
+            </call-template>
+            <respond/>
+        </inSequence>
+    </resource>
+</api>
