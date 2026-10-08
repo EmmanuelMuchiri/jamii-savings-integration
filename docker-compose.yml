@@ -3,6 +3,8 @@
 #   docker compose --profile core up -d
 #   docker compose --profile core --profile observability up -d
 # Dockerfiles are added per Jira stories S2.4-S2.10 (core) and E8/E9 (stretch).
+# Start the mock backends first (separate project: jamii-mock-backends) so the
+# external network jamii-shared exists.
 
 name: jamii
 
@@ -12,6 +14,8 @@ x-build-common: &build-common
 
 networks:
   jamii-net:
+  jamii-shared:          # created by the separate jamii-mock-backends compose project
+    external: true
 
 volumes:
   h2-data:
@@ -25,39 +29,114 @@ services:
   # ---------- core ----------
   h2:
     profiles: [core]
-    build: { context: ./docker/h2 }
+    build:
+      context: ./docker/h2
+      additional_contexts:
+        db: ./db
     image: ${REGISTRY}/jamii/h2:${TAG}
     environment:
       H2_DB_NAME: ${H2_DB_NAME}
       H2_USER: ${H2_USER}
       H2_PASSWORD: ${H2_PASSWORD}
+      H2_RESET_ON_START: ${H2_RESET_ON_START:-true}
     volumes: [h2-data:/data]
     ports: ["127.0.0.1:8082:8082"]          # H2 console, dev only; 9092 stays internal
-    networks: [jamii-net]
-
-  wiremock:
-    profiles: [core]
-    build: { context: ./docker/wiremock }
-    image: ${REGISTRY}/jamii/wiremock:${TAG}
-    ports: ["127.0.0.1:8089:8080"]
     networks: [jamii-net]
 
   mi:
     profiles: [core]
     build:
       context: ./docker/mi
-      <<: *build-common
+      additional_contexts:
+        dist: ./dist        # WSO2 zip, verified against dist/checksums.txt
+        mi_src: ./mi        # integration artifacts
       args:
         MI_VERSION: ${MI_VERSION}
-        JAVA_BASE_IMAGE: ${JAVA_BASE_IMAGE}
+        JAVA_BASE_IMAGE: ${WSO2_JAVA_BASE_IMAGE}
     image: ${REGISTRY}/jamii/mi:${TAG}
     environment:
       H2_URL: jdbc:h2:tcp://h2:9092/${H2_DB_NAME}
       H2_USER: ${H2_USER}
       H2_PASSWORD: ${H2_PASSWORD}
       CUSTOMER_BACKEND_URL: ${CUSTOMER_BACKEND_URL}
-      LOAN_BACKEND_URL: ${LOAN_BACKEND_URL}
+      CREDIT_BACKEND_URL: ${CREDIT_BACKEND_URL}
     volumes: [mi-logs:/home/wso2/mi/repository/logs]
     ports: ["127.0.0.1:9164:9164"]          # management API only; runtime 8290 is never published
-    depends_on: [h2]
+    depends_on:
+      h2:
+        condition: service_healthy
+    networks: [jamii-net, jamii-shared]
+
+  apim:
+    profiles: [core]
+    build:
+      context: ./docker/apim
+      <<: *build-common
+      args:
+        APIM_VERSION: ${APIM_VERSION}
+        JAVA_BASE_IMAGE: ${WSO2_JAVA_BASE_IMAGE}
+    image: ${REGISTRY}/jamii/apim:${TAG}
+    environment:
+      APIM_ADMIN_USER: ${APIM_ADMIN_USER}
+      APIM_ADMIN_PASSWORD: ${APIM_ADMIN_PASSWORD}
+    volumes: [apim-logs:/home/wso2/apim/repository/logs]
+    ports:
+      - "9443:9443"   # Publisher, Developer Portal, Admin
+      - "8243:8243"   # Gateway (HTTPS)
+    depends_on: [mi]
+    networks: [jamii-net]
+
+  # ---------- observability (stretch) ----------
+  elasticsearch:
+    profiles: [observability]
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+    volumes: [es-data:/usr/share/elasticsearch/data]
+    networks: [jamii-net]
+
+  logstash:
+    profiles: [observability]
+    build: { context: ./docker/logstash }
+    image: ${REGISTRY}/jamii/logstash:${TAG}
+    environment: { LS_JAVA_OPTS: -Xms512m -Xmx512m }
+    depends_on: [elasticsearch]
+    networks: [jamii-net]
+
+  filebeat:
+    profiles: [observability]
+    build: { context: ./docker/filebeat }
+    image: ${REGISTRY}/jamii/filebeat:${TAG}
+    volumes:
+      - mi-logs:/logs/mi:ro
+      - apim-logs:/logs/apim:ro
+    depends_on: [logstash]
+    networks: [jamii-net]
+
+  kibana:
+    profiles: [observability]
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
+    ports: ["127.0.0.1:5601:5601"]
+    depends_on: [elasticsearch]
+    networks: [jamii-net]
+
+  # ---------- ci ----------
+  registry:
+    profiles: [ci]
+    image: registry:2
+    volumes: [registry-data:/var/lib/registry]
+    ports: ["127.0.0.1:5000:5000"]
+    networks: [jamii-net]
+
+  jenkins:
+    profiles: [ci]
+    build: { context: ./docker/jenkins }
+    image: ${REGISTRY}/jamii/jenkins:${TAG}
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dist:/dist:ro
+    ports: ["127.0.0.1:8080:8080"]
     networks: [jamii-net]

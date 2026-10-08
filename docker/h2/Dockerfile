@@ -1,5 +1,5 @@
 # H2 database in server (TCP) mode for the Balance API.
-ARG JAVA_BASE_IMAGE=eclipse-temurin:17-jre
+ARG JAVA_BASE_IMAGE=eclipse-temurin:21-jre
 FROM ${JAVA_BASE_IMAGE}
 ARG H2_VERSION=2.2.224
 RUN groupadd --system h2 && useradd --system --gid h2 --uid 10801 --home /opt/h2 h2 \

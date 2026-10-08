@@ -14,6 +14,8 @@ RUN grep " wso2mi-${MI_VERSION}.zip$" checksums.txt | sha256sum -c - \
  && unzip -q wso2mi-${MI_VERSION}.zip -d /opt \
  && mv /opt/wso2mi-${MI_VERSION} /opt/mi \
  && chmod +x /opt/mi/bin/*.sh
+COPY configure.sh /tmp/configure.sh
+RUN bash /tmp/configure.sh /opt/mi
 # Must match the H2 server version in docker/h2 (TCP protocol compatibility)
 ADD https://repo1.maven.org/maven2/com/h2database/h2/${H2_VERSION}/h2-${H2_VERSION}.jar /opt/mi/lib/h2-${H2_VERSION}.jar
 
