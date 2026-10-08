@@ -12,8 +12,6 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 ## Architecture
 
-![High-level design](docs/diagrams/hld.png)
-
 ![Architecture](docs/diagrams/wso2_apim.png)
 
 Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.4.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.4.pdf)
