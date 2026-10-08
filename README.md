@@ -10,13 +10,13 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 > Status: work in progress. Sections marked TODO are completed during the build.
 
-## Architecture
+## API Manager Branded
 
-![High-level design](docs/diagrams/hld.png)
+![Devportal](docs/diagrams/docs/diagrams/pizza_schack_branded.png.png)
 
-![Architecture](docs/diagrams/architecture.png)
+![PizzaShack](docs/diagrams/pizza_shack_deployed.png)
 
-Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.4.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.4.pdf)
+![Login_Page](docs/diagrams/branded_login_page.png)
 
 ## Backend choices
 
