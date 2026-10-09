@@ -1,0 +1,16 @@
+{
+  "name": "JamiiRetailBanking",
+  "context": "/jamii/retail-banking",
+  "description": "Jamii Retail Banking: account balance, customer profile and loan eligibility under one subscription.",
+  "policies": ["Gold"],
+  "securityScheme": ["oauth2", "oauth_basic_auth_api_key_mandatory"],
+  "transport": ["https"],
+  "visibility": "PUBLIC",
+  "tags": ["jamii", "banking"],
+  "gatewayVendor": "wso2",
+  "apis": [
+    { "name": "JamiiAccountBalance",  "version": "v1", "operations": [ { "target": "/{accountNumber}/balance", "verb": "GET" } ] },
+    { "name": "JamiiCustomerProfile", "version": "v1", "operations": [ { "target": "/{customerId}", "verb": "GET" } ] },
+    { "name": "JamiiLoanEligibility", "version": "v1", "operations": [ { "target": "/eligibility", "verb": "POST" } ] }
+  ]
+}

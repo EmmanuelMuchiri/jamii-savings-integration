@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jamii.daqiqtech.co.ke/schemas/error-response.json",
+  "title": "Jamii standard error response",
+  "type": "object",
+  "required": ["error", "requestId", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": "object",
+      "required": ["code", "message", "httpStatus", "details"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["VALIDATION_ERROR", "UNAUTHORIZED", "ACCOUNT_NOT_FOUND", "CUSTOMER_NOT_FOUND",
+                   "ELIGIBILITY_REJECTED", "THROTTLED", "INTERNAL_ERROR", "BAD_GATEWAY",
+                   "DB_UNAVAILABLE", "BACKEND_UNAVAILABLE", "BACKEND_TIMEOUT"]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "httpStatus": { "type": "integer", "enum": [400, 401, 404, 422, 429, 500, 502, 503, 504] },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "issue"],
+            "properties": { "field": { "type": "string" }, "issue": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "requestId": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

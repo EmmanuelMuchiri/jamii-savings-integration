@@ -1,0 +1,74 @@
+# ============================================================
+# Jamii Savings Integration Platform - .gitignore
+# ============================================================
+
+# ---------- WSO2 distributions (large; see dist/README.md) ----------
+dist/*.zip
+dist/*.tar.gz
+!dist/README.md
+!dist/checksums.txt
+
+# ---------- Secrets and local configuration ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+docker/nginx/certs/
+**/secrets/
+
+# ---------- Maven / MI build output ----------
+target/
+*.car
+*.class
+.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+
+# ---------- MI tooling (VS Code extension / Eclipse metadata) ----------
+.classpath
+.project
+.settings/
+.factorypath
+.metadata/
+mi/**/deployment/
+mi/**/.wso2mi/
+
+# ---------- apictl working files, exports, rollback points ----------
+.wso2apictl/
+apim/**/*.zip
+apim/**/Deployment/
+exports/
+rollback/
+
+# ---------- Runtime data and logs ----------
+*.log
+logs/
+data/
+*.mv.db
+*.trace.db
+
+# ---------- Test and report output ----------
+test-results/
+reports/
+*.tmp
+
+# ---------- Node (only if helper tooling is added) ----------
+node_modules/
+
+# ---------- IDE / OS ----------
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Demo credentials written by scripts/apim-bootstrap.sh
+.apim-demo.env
