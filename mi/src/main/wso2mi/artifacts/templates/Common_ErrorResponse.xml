@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Builds the standard error body (BRD 8.3), sets status and correlation header, logs, responds.
+     'field' and 'issue' are optional; when set they become one entry in details[]. -->
+<template name="Common_ErrorResponse" xmlns="http://ws.apache.org/ns/synapse">
+    <parameter name="httpStatus"/>
+    <parameter name="code"/>
+    <parameter name="message"/>
+    <parameter name="field" defaultValue=""/>
+    <parameter name="issue" defaultValue=""/>
+    <sequence>
+        <property name="errTimestamp" expression="get-property('SYSTEM_DATE', &quot;yyyy-MM-dd'T'HH:mm:ss.SSS'Z'&quot;)" scope="default" type="STRING"/>
+        <filter xpath="string-length($func:field) &gt; 0">
+            <then>
+                <payloadFactory media-type="json">
+                    <format>{"error":{"code":"$1","message":"$2","httpStatus":$3,"details":[{"field":"$4","issue":"$5"}]},"requestId":"$6","timestamp":"$7"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="$func:code"/>
+                        <arg evaluator="xml" expression="$func:message"/>
+                        <arg evaluator="xml" expression="$func:httpStatus"/>
+                        <arg evaluator="xml" expression="$func:field"/>
+                        <arg evaluator="xml" expression="$func:issue"/>
+                        <arg evaluator="xml" expression="get-property('correlationId')"/>
+                        <arg evaluator="xml" expression="get-property('errTimestamp')"/>
+                    </args>
+                </payloadFactory>
+            </then>
+            <else>
+                <payloadFactory media-type="json">
+                    <format>{"error":{"code":"$1","message":"$2","httpStatus":$3,"details":[]},"requestId":"$4","timestamp":"$5"}</format>
+                    <args>
+                        <arg evaluator="xml" expression="$func:code"/>
+                        <arg evaluator="xml" expression="$func:message"/>
+                        <arg evaluator="xml" expression="$func:httpStatus"/>
+                        <arg evaluator="xml" expression="get-property('correlationId')"/>
+                        <arg evaluator="xml" expression="get-property('errTimestamp')"/>
+                    </args>
+                </payloadFactory>
+            </else>
+        </filter>
+        <!-- Drop all backend headers so nothing internal leaks on an error -->
+        <property name="TRANSPORT_HEADERS" scope="axis2" action="remove"/>
+        <property name="HTTP_SC" scope="axis2" expression="$func:httpStatus" type="STRING"/>
+        <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+        <property name="ContentType" value="application/json" scope="axis2" type="STRING"/>
+        <header name="X-Correlation-ID" scope="transport" expression="get-property('correlationId')"/>
+        <call-template target="Common_MaskedLog">
+            <with-param name="stage" value="RESPONSE_OUT"/>
+            <with-param name="detail" value="{concat('httpStatus=', $func:httpStatus, ' errorCode=', $func:code, ' latencyMs=', get-property('SYSTEM_TIME') - get-property('startTime'))}"/>
+        </call-template>
+        <respond/>
+    </sequence>
+</template>
