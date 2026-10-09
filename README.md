@@ -22,11 +22,13 @@ scripts/up.sh
 
 If the mock backends are already running, a plain `docker compose up -d --build` does the same; follow progress with `docker compose logs -f apim-init`. Re-publish at any time with `docker compose run --rm apim-init`.
 
-## Architecture
+## Devportal
 
-![High-level design](docs/diagrams/hld.png)
+![High-level design](docs/diagrams/devportal.png)
 
-![Architecture](docs/diagrams/architecture.png)
+## Devportal
+
+![Architecture](docs/diagrams/publisher.png)
 
 Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.4.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.4.pdf)
 
