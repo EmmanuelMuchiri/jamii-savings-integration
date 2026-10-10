@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Jamii Account Balance
   version: v1
-  description: Returns the balances and status of a Jamii Savings account. Backed by a database through WSO2 Micro Integrator.
+  description: Returns the balance and status of a Jamii Savings account. Backed by a database through WSO2 Micro Integrator.
   contact:
     name: Jamii Savings API team
 servers:

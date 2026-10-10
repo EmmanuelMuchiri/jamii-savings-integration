@@ -22,9 +22,9 @@ scripts/up.sh
 
 A plain `docker compose up -d --build` does the same; follow progress with `docker compose logs -f apim-init`. Re-publish at any time with `docker compose run --rm apim-init`.
 
-## Architecture
+## Jenkins
 
-![High-level design](docs/diagrams/hld.png)
+![Jenkins Local](docs/diagrams/jenkins_local.png)
 
 ![Architecture](docs/diagrams/architecture.png)
 
