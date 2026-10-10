@@ -8,7 +8,6 @@
 // release that passed, including the API definitions (re-imported by that release's apim-init).
 
 def APIS = ['JamiiAccountBalance', 'JamiiCustomerProfile', 'JamiiLoanEligibility']   // one loop, no copy-paste
-def COMPOSE = 'docker compose -f docker-compose.yml -f docker-compose.ci.yml'
 def LAST_GOOD_FILE = '/var/jenkins_home/jamii-last-good-tag'
 
 pipeline {
@@ -22,8 +21,10 @@ pipeline {
   parameters {
     booleanParam(name: 'PROMOTE_TO_PROD', defaultValue: false, description: 'Run the approval-gated prod stage (dry run)')
     booleanParam(name: 'FORCE_FAIL_IMPORT', defaultValue: false, description: 'Demo: break one API import to prove there is no partial deploy and rollback runs')
+    booleanParam(name: 'NO_CACHE', defaultValue: false, description: 'Build every image from scratch (docker build --no-cache)')
   }
   environment {
+    COMPOSE              = 'docker compose -f docker-compose.yml -f docker-compose.ci.yml'   // used as $COMPOSE in sh steps
     COMPOSE_PROJECT_NAME = 'jamii'
     COMPOSE_PROFILES     = 'core'
     TAG                  = "${env.BUILD_NUMBER}"
@@ -55,6 +56,7 @@ pipeline {
           docker compose version
           echo "Release tag: $TAG"
         '''
+        script { env.NO_CACHE_FLAG = params.NO_CACHE ? '--no-cache' : ''; echo "Image builds: ${params.NO_CACHE ? 'no cache' : 'cached layers allowed'}" }
         script {
           if (params.FORCE_FAIL_IMPORT) {
             echo 'FORCE_FAIL_IMPORT: pointing JamiiLoanEligibility at a tier that does not exist'
@@ -94,7 +96,7 @@ pipeline {
       steps {
         sh '''
           set -e
-          docker build --target build -t jamii/mock-backends-build:$TAG mock-backends
+          docker build $NO_CACHE_FLAG --target build -t jamii/mock-backends-build:$TAG mock-backends
           id=$(docker create jamii/mock-backends-build:$TAG)
           docker cp "$id:/src/target/surefire-reports" reports/mock-backends
           docker rm "$id" >/dev/null
@@ -105,7 +107,7 @@ pipeline {
 
     stage('Build images') {
       steps {
-        sh '$COMPOSE build mock-backends h2 mi apim apim-init'
+        sh '$COMPOSE build $NO_CACHE_FLAG mock-backends h2 mi apim apim-init'
         sh 'docker image ls --format "{{.Repository}}:{{.Tag}}  {{.Size}}" | grep "jamii/.*:$TAG"'
       }
     }
@@ -172,10 +174,10 @@ pipeline {
         def last = sh(script: "cat ${LAST_GOOD_FILE} 2>/dev/null || true", returnStdout: true).trim()
         if (last && last != env.TAG) {
           echo "ROLLBACK: restoring release ${last} (images and API definitions)"
-          sh """
-            TAG=${last} ${COMPOSE} up -d --no-build --wait mock-backends h2 mi apim
-            TAG=${last} ${COMPOSE} run --rm apim-init
-          """
+          withEnv(["TAG=${last}"]) {
+            sh '$COMPOSE up -d --no-build --wait mock-backends h2 mi apim'
+            sh '$COMPOSE run --rm apim-init'
+          }
         } else {
           echo 'No earlier good release recorded; nothing to roll back to.'
         }

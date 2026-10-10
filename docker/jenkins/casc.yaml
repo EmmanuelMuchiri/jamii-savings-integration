@@ -38,7 +38,7 @@ jobs:
             scm {
               git {
                 remote { url(System.getenv('JAMII_REPO_URL') ?: 'file:///src') }
-                branch(System.getenv('JAMII_REPO_BRANCH') ?: '*/main')
+                branch(System.getenv('JAMII_REPO_BRANCH') ?: '*/feature/jenkins')
               }
             }
             scriptPath('Jenkinsfile')

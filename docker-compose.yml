@@ -185,7 +185,7 @@ services:
       APIM_ADMIN_PASSWORD: ${APIM_ADMIN_PASSWORD}  # seeded into Jenkins credentials (casc.yaml)
       H2_PASSWORD: ${H2_PASSWORD}
       JAMII_REPO_URL: ${JAMII_REPO_URL:-file:///src}  # or your GitHub URL
-      JAMII_REPO_BRANCH: ${JAMII_REPO_BRANCH:-*/main}
+      JAMII_REPO_BRANCH: ${JAMII_REPO_BRANCH:-*/feature/jenkins}
     volumes:
       - jenkins-home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
