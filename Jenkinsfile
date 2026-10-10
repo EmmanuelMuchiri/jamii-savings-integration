@@ -18,6 +18,11 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '20'))
     timeout(time: 60, unit: 'MINUTES')
   }
+  triggers {
+    // Build on every push to the configured branch via a GitHub webhook to /github-webhook/.
+    // Active once Jenkins is reachable from GitHub (the VPS); locally, builds are started by hand.
+    githubPush()
+  }
   parameters {
     booleanParam(name: 'PROMOTE_TO_PROD', defaultValue: false, description: 'Run the approval-gated prod stage (dry run)')
     booleanParam(name: 'FORCE_FAIL_IMPORT', defaultValue: false, description: 'Demo: break one API import to prove there is no partial deploy and rollback runs')
