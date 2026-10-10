@@ -1,0 +1,58 @@
+type: api
+version: v4.4.0
+data:
+  name: JamiiLoanEligibility
+  description: Loan eligibility (REST/JSON in front of the SOAP credit-check engine).
+  context: /jamii/loans
+  version: v1
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isDefaultVersion: false
+  isRevision: false
+  enableSchemaValidation: false
+  type: HTTP
+  audiences:
+  - all
+  transport:
+  - https
+  tags:
+  - jamii
+  - banking
+  policies:
+  - LoanCheck10PerMin
+  - Gold
+  apiThrottlingPolicy: null
+  authorizationHeader: Authorization
+  apiKeyHeader: ApiKey
+  securityScheme:
+  - oauth2
+  - oauth_basic_auth_api_key_mandatory
+  visibility: PUBLIC
+  visibleRoles: []
+  accessControl: NONE
+  accessControlRoles: []
+  businessInformation:
+    businessOwner: Jamii Savings Digital Channels
+    technicalOwner: Jamii Savings Integration Team
+  corsConfiguration:
+    corsConfigurationEnabled: false
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: http://mi:8290/loans
+    sandbox_endpoints:
+      url: http://mi:8290/loans
+  endpointImplementationType: ENDPOINT
+  gatewayVendor: wso2
+  gatewayType: wso2/synapse
+  operations:
+  - target: /eligibility
+    verb: POST
+    authType: Application & Application User
+    throttlingPolicy: Unlimited
+    scopes: []
+    usedProductIds: []
+    operationPolicies:
+      request: []
+      response: []
+      fault: []

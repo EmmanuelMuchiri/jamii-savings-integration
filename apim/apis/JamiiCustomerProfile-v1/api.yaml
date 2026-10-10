@@ -1,0 +1,58 @@
+type: api
+version: v4.4.0
+data:
+  name: JamiiCustomerProfile
+  description: Customer profile (managed proxy to the customer system).
+  context: /jamii/customers
+  version: v1
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isDefaultVersion: false
+  isRevision: false
+  enableSchemaValidation: false
+  type: HTTP
+  audiences:
+  - all
+  transport:
+  - https
+  tags:
+  - jamii
+  - banking
+  policies:
+  - Gold
+  - Unlimited
+  apiThrottlingPolicy: null
+  authorizationHeader: Authorization
+  apiKeyHeader: ApiKey
+  securityScheme:
+  - api_key
+  - oauth_basic_auth_api_key_mandatory
+  visibility: PUBLIC
+  visibleRoles: []
+  accessControl: NONE
+  accessControlRoles: []
+  businessInformation:
+    businessOwner: Jamii Savings Digital Channels
+    technicalOwner: Jamii Savings Integration Team
+  corsConfiguration:
+    corsConfigurationEnabled: false
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: http://mi:8290/customers
+    sandbox_endpoints:
+      url: http://mi:8290/customers
+  endpointImplementationType: ENDPOINT
+  gatewayVendor: wso2
+  gatewayType: wso2/synapse
+  operations:
+  - target: /{customerId}
+    verb: GET
+    authType: Application & Application User
+    throttlingPolicy: Unlimited
+    scopes: []
+    usedProductIds: []
+    operationPolicies:
+      request: []
+      response: []
+      fault: []

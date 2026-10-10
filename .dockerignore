@@ -1,0 +1,13 @@
+# Root build context (used only by the CI apim-init image)
+.git
+dist
+mock-backends
+mi
+db
+docker
+docs/*.pdf
+docs/diagrams
+docs/branding
+*.log
+.env
+.apim-demo.env

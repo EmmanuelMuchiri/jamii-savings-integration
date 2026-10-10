@@ -1,0 +1,17 @@
+# apim-init for CI: same tools as docker/apim-init/Dockerfile, but the API projects and scripts
+# are baked into the image, so it also works when Compose runs inside the Jenkins container
+# (where the repo folder cannot be bind-mounted). Build context: repository root.
+FROM alpine:3.20
+ARG APICTL_VERSION=4.4.1
+ARG TARGETARCH
+RUN apk add --no-cache bash curl jq ca-certificates tar \
+ && ARCH="${TARGETARCH:-amd64}" \
+ && curl -fsSL "https://github.com/wso2/product-apim-tooling/releases/download/v${APICTL_VERSION}/apictl-${APICTL_VERSION}-linux-${ARCH}.tar.gz" -o /tmp/apictl.tgz \
+ && tar -xzf /tmp/apictl.tgz -C /tmp && mv /tmp/apictl/apictl /usr/local/bin/apictl && chmod +x /usr/local/bin/apictl \
+ && rm -rf /tmp/apictl /tmp/apictl.tgz && apictl version
+WORKDIR /work
+COPY apim ./apim
+COPY scripts ./scripts
+COPY docs/postman ./docs/postman
+ENTRYPOINT ["bash", "-c"]
+CMD ["bash scripts/apim-bootstrap.sh dev"]

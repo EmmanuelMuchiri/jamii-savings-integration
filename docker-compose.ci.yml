@@ -1,0 +1,16 @@
+# CI override (used by the Jenkinsfile):  docker compose -f docker-compose.yml -f docker-compose.ci.yml ...
+# Compose runs inside the Jenkins container, so the repo cannot be bind-mounted into apim-init;
+# the CI image bakes the API projects and scripts in instead. Needs Docker Compose 2.24+ (!override).
+services:
+  apim-init:
+    build:
+      context: .
+      dockerfile: docker/apim-init/Dockerfile.ci
+    volumes: !override
+      - apim-init-state:/state                 # shares the demo credentials between pipeline stages
+    environment:
+      DEMO_ENV_FILE: /state/apim-demo.env
+    command: ["bash scripts/apim-bootstrap.sh dev"]
+
+volumes:
+  apim-init-state:

@@ -1,0 +1,1 @@
+# Replace with: sha256sum wso2mi-*.zip wso2am-*.zip
