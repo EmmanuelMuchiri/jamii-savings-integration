@@ -1,0 +1,20 @@
+# Standalone deployment of the mock backends (optional).
+# Normally they run as the mock-backends service of the root docker-compose.yml.
+#   cd mock-backends && docker compose up -d --build
+name: jamii-mocks
+
+services:
+  mock-backends:
+    build: .
+    image: ${REGISTRY:-localhost:5000}/jamii/mock-backends:${TAG:-local}
+    container_name: jamii-mock-backends
+    environment:
+      JAVA_TOOL_OPTIONS: -Xms128m
+    ports:
+      - "${MOCK_HOST_PORT:-8081}:8080"
+    restart: unless-stopped
+    networks: [jamii-shared]
+
+networks:
+  jamii-shared:
+    name: jamii-shared

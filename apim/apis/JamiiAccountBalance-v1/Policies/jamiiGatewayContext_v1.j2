@@ -1,0 +1,8 @@
+<!-- Jamii Gateway Context (request flow) -->
+<filter xpath="string-length($trp:X-Correlation-ID) = 0">
+    <then>
+        <property name="X-Correlation-ID" expression="substring-after(get-property('MessageID'), 'urn:uuid:')" scope="transport" type="STRING"/>
+    </then>
+</filter>
+<property name="X-Channel" expression="get-property('api.ut.application.name')" scope="transport" type="STRING"/>
+<property name="Authorization" scope="transport" action="remove"/>
