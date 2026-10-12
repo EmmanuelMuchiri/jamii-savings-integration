@@ -1,0 +1,56 @@
+{
+  "palette": {
+    "primary": {
+      "light": "#2A4C8A",
+      "main": "#102E62",
+      "dark": "#0A1F45",
+      "contrastText": "#FFFFFF"
+    },
+    "secondary": {
+      "light": "#5BBE61",
+      "main": "#3B9B4A",
+      "dark": "#2F7F3E",
+      "contrastText": "#FFFFFF"
+    },
+    "background": {
+      "default": "#FFFFFF",
+      "paper": "#FFFFFF"
+    }
+  },
+  "custom": {
+    "title": {
+      "prefix": "",
+      "sufix": "Jamii Savings Developer Portal"
+    },
+    "appBar": {
+      "logo": "/site/public/images/custom/jamii-logo-header.png",
+      "logoHeight": 44,
+      "logoWidth": 109,
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "searchInputBackground": "#F2F5FA",
+      "searchInputActiveBackground": "#FFFFFF",
+      "activeBackground": "#E8F5E9",
+      "showSearch": true,
+      "drawerWidth": 200
+    },
+    "leftMenu": {
+      "background": "#102E62",
+      "backgroundSecondary": "#0A1F45",
+      "leftMenuActive": "#2F7F3E",
+      "leftMenuActiveSubmenu": "#3B9B4A",
+      "width": 210
+    },
+    "landingPage": {
+      "active": false
+    },
+    "footer": {
+      "active": true,
+      "text": "\u00a9 2026 Jamii Savings \u00b7 Together for a brighter tomorrow",
+      "background": "#102E62",
+      "color": "#FFFFFF",
+      "height": 50
+    },
+    "defaultApiView": "grid"
+  }
+}
