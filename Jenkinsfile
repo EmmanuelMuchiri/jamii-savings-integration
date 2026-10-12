@@ -31,7 +31,6 @@ pipeline {
     REGISTRY             = 'localhost:5000'
     MI_VERSION           = '4.3.0'
     APIM_VERSION         = '4.4.0'
-    MI_DASHBOARD_VERSION = '4.2.0'
     WSO2_JAVA_BASE_IMAGE = 'eclipse-temurin:17-jre'
     JAVA_BASE_IMAGE      = 'eclipse-temurin:21-jre'
     H2_DB_NAME           = 'jamii'
@@ -58,6 +57,13 @@ pipeline {
           echo "Release tag: $TAG"
         '''
         script { env.NO_CACHE_FLAG = params.NO_CACHE ? '--no-cache' : ''; echo "Image builds: ${params.NO_CACHE ? 'no cache' : 'cached layers allowed'}" }
+        script {
+          // MI Dashboard version comes from the zip actually present in dist/ (e.g. 4.2.0, 4.3.0, 4.2.0-beta)
+          def zip = sh(script: "ls dist/wso2mi-dashboard-*.zip 2>/dev/null | head -1", returnStdout: true).trim()
+          if (!zip) { error 'No wso2mi-dashboard-<version>.zip in dist/ (mounted from the host dist/ folder)' }
+          env.MI_DASHBOARD_VERSION = zip.replaceAll(/^.*wso2mi-dashboard-/, '').replaceAll(/\.zip$/, '')
+          echo "MI Dashboard version: ${env.MI_DASHBOARD_VERSION}"
+        }
         script {
           if (params.FORCE_FAIL_IMPORT) {
             echo 'FORCE_FAIL_IMPORT: pointing JamiiLoanEligibility at a tier that does not exist'
