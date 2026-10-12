@@ -138,8 +138,8 @@ if [[ $(echo "$REVS" | jq '.count // (.list|length)') -ge 5 ]]; then
 fi
 REV=$(rest POST "$PUB/api-products/$PID/revisions" -H 'Content-Type: application/json' --data '{"description":"bootstrap"}' | jq -r .id)
 rest POST "$PUB/api-products/$PID/deploy-revision?revisionId=$REV" -H 'Content-Type: application/json' \
-  --data '[{"name":"Default","vhost":"localhost","displayOnDevportal":true}]' >/dev/null
-ok "revision $REV deployed to the Default gateway"
+  --data "[{\"name\":\"Default\",\"vhost\":\"${GATEWAY_HOSTNAME:-localhost}\",\"displayOnDevportal\":true}]" >/dev/null
+ok "revision $REV deployed to the Default gateway (${GATEWAY_HOSTNAME:-localhost})"
 STATE=$(rest GET "$PUB/api-products/$PID" | jq -r '.state // .lifeCycleStatus // "unknown"')
 if [[ $STATE != PUBLISHED ]]; then
   if rest POST "$PUB/api-products/change-lifecycle?action=Publish&apiProductId=$PID" >/dev/null 2>&1; then ok "published"

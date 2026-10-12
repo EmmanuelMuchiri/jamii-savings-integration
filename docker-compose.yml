@@ -134,6 +134,7 @@ services:
       GATEWAY_URL: https://apim:8243
       PUBLIC_APIM_URL: ${PUBLIC_APIM_URL:-https://localhost:9443}     # written to .apim-demo.env for use from the host
       PUBLIC_GATEWAY_URL: ${PUBLIC_GATEWAY_URL:-https://localhost:8243}
+      GATEWAY_HOSTNAME: ${GATEWAY_HOSTNAME:-localhost}   # the API Product's gateway address (vhost)
       RUN_GATEWAY_CHECK: ${RUN_GATEWAY_CHECK:-true}
       APIM_ADMIN_USER: ${APIM_ADMIN_USER}
       APIM_ADMIN_PASSWORD: ${APIM_ADMIN_PASSWORD}
