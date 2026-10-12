@@ -41,6 +41,8 @@ pipeline {
     CREDIT_BACKEND_URL   = 'http://jamii-mock-backends:8080/ws'
     ELASTIC_VERSION      = '8.15.0'
     RUN_GATEWAY_CHECK    = 'false'
+    // APIM_HOSTNAME, GATEWAY_HOSTNAME, APIM_SELF_ADDRESS, PUBLIC_*: inherited from the Jenkins container
+    // (docker-compose.yml passes them from .env), so pipeline deploys keep the VPS public names.
     APIM_ADMIN_PASSWORD  = credentials('apim-admin-password')
     H2_PASSWORD          = credentials('h2-password')
   }

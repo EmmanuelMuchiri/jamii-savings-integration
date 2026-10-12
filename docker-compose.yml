@@ -207,8 +207,14 @@ services:
       APIM_ADMIN_PASSWORD: ${APIM_ADMIN_PASSWORD}  # seeded into Jenkins credentials (casc.yaml)
       H2_PASSWORD: ${H2_PASSWORD}
       JAMII_REPO_URL: ${JAMII_REPO_URL:-file:///src}  # or your GitHub URL
-      JAMII_REPO_BRANCH: ${JAMII_REPO_BRANCH:-*/master}
+      JAMII_REPO_BRANCH: ${JAMII_REPO_BRANCH:-*/main}
       JENKINS_URL: ${JENKINS_URL:-http://localhost:8090/}
+      # VPS: the pipeline redeploys API Manager, so it needs the same public names as .env
+      APIM_HOSTNAME: ${APIM_HOSTNAME:-localhost}
+      GATEWAY_HOSTNAME: ${GATEWAY_HOSTNAME:-localhost}
+      APIM_SELF_ADDRESS: ${APIM_SELF_ADDRESS:-127.0.0.1}
+      PUBLIC_APIM_URL: ${PUBLIC_APIM_URL:-https://localhost:9443}
+      PUBLIC_GATEWAY_URL: ${PUBLIC_GATEWAY_URL:-https://localhost:8243}
       GITHUB_USER: ${GITHUB_USER:-}                 # private repo only
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}               # fine-grained token, read-only Contents
     volumes:
