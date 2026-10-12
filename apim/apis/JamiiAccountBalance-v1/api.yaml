@@ -1,0 +1,62 @@
+type: api
+version: v4.4.0
+data:
+  name: JamiiAccountBalance
+  description: Account balance and status (H2 via MI Data Service).
+  context: /jamii/accounts
+  version: v1
+  provider: admin
+  lifeCycleStatus: PUBLISHED
+  isDefaultVersion: false
+  isRevision: false
+  enableSchemaValidation: false
+  type: HTTP
+  audiences:
+  - all
+  transport:
+  - https
+  tags:
+  - jamii
+  - banking
+  policies:
+  - Gold
+  - Unlimited
+  apiThrottlingPolicy: null
+  authorizationHeader: Authorization
+  apiKeyHeader: ApiKey
+  securityScheme:
+  - oauth2
+  - oauth_basic_auth_api_key_mandatory
+  visibility: PUBLIC
+  visibleRoles: []
+  accessControl: NONE
+  accessControlRoles: []
+  businessInformation:
+    businessOwner: Jamii Savings Digital Channels
+    technicalOwner: Jamii Savings Integration Team
+  corsConfiguration:
+    corsConfigurationEnabled: false
+  endpointConfig:
+    endpoint_type: http
+    production_endpoints:
+      url: http://mi:8290/accounts
+    sandbox_endpoints:
+      url: http://mi:8290/accounts
+  endpointImplementationType: ENDPOINT
+  gatewayVendor: wso2
+  gatewayType: wso2/synapse
+  operations:
+  - target: /{accountNumber}/balance
+    verb: GET
+    authType: Application & Application User
+    throttlingPolicy: Unlimited
+    scopes: []
+    usedProductIds: []
+    operationPolicies:
+      request:
+      - policyName: jamiiGatewayContext
+        policyVersion: v1
+        policyType: api
+        parameters: {}
+      response: []
+      fault: []

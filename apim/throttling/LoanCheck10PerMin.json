@@ -1,0 +1,20 @@
+{
+  "policyName": "LoanCheck10PerMin",
+  "displayName": "LoanCheck10PerMin",
+  "description": "10 requests per minute. Loan eligibility calls an external credit engine with no SLA, so the quota protects it. (Tier names may not contain hyphens.)",
+  "defaultLimit": {
+    "type": "REQUESTCOUNTLIMIT",
+    "requestCount": {
+      "timeUnit": "min",
+      "unitTime": 1,
+      "requestCount": 10
+    }
+  },
+  "rateLimitCount": 0,
+  "rateLimitTimeUnit": "sec",
+  "subscriberCount": 0,
+  "customAttributes": [],
+  "stopOnQuotaReach": true,
+  "billingPlan": "FREE",
+  "permissions": null
+}

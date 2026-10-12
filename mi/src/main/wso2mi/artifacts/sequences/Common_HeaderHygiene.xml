@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Strips internal and server-identifying headers. Used on the way in and on the way out. -->
+<sequence name="Common_HeaderHygiene" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <header name="X-Internal-Debug" scope="transport" action="remove"/>
+    <header name="X-Internal-Trace" scope="transport" action="remove"/>
+    <header name="X-Internal-Node" scope="transport" action="remove"/>
+    <header name="X-Powered-By" scope="transport" action="remove"/>
+    <header name="Server" scope="transport" action="remove"/>
+    <header name="Set-Cookie" scope="transport" action="remove"/>
+</sequence>
