@@ -1,0 +1,11 @@
+environments:
+- name: dev
+  configs:
+    endpoints:
+      production:
+        url: http://mi:8290/loans
+      sandbox:
+        url: http://mi:8290/loans
+    deploymentEnvironments:
+    - displayOnDevportal: true
+      deploymentEnvironment: Default

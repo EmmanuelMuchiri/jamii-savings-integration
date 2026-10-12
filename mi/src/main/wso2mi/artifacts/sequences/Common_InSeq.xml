@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Runs first in every API: correlation ID (reuse caller's or generate) and start time. -->
+<sequence name="Common_InSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <filter xpath="string-length($trp:X-Correlation-ID) &gt; 0">
+        <then>
+            <property name="correlationId" expression="$trp:X-Correlation-ID" scope="default" type="STRING"/>
+        </then>
+        <else>
+            <property name="correlationId" expression="substring-after(get-property('MessageID'), 'urn:uuid:')" scope="default" type="STRING"/>
+            <filter xpath="string-length(get-property('correlationId')) = 0">
+                <then>
+                    <property name="correlationId" expression="concat('mi-', get-property('SYSTEM_TIME'))" scope="default" type="STRING"/>
+                </then>
+            </filter>
+        </else>
+    </filter>
+    <property name="startTime" expression="get-property('SYSTEM_TIME')" scope="default" type="STRING"/>
+    <!-- Propagate to the backend so its logs carry the same ID -->
+    <header name="X-Correlation-ID" scope="transport" expression="get-property('correlationId')"/>
+</sequence>

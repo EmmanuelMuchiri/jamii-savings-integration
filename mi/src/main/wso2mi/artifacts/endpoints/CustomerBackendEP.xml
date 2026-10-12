@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mock customer system. Address comes from the To header (system property customer.backend.url).
+     Default endpoint, so the backend URL is configuration, not code. Suspension is disabled so
+     every failure is reported per request instead of blacklisting the endpoint. -->
+<endpoint name="CustomerBackendEP" xmlns="http://ws.apache.org/ns/synapse">
+    <default format="rest">
+        <timeout>
+            <duration>5000</duration>
+            <responseAction>fault</responseAction>
+        </timeout>
+        <suspendOnFailure>
+            <errorCodes>-1</errorCodes>
+            <initialDuration>0</initialDuration>
+            <progressionFactor>1.0</progressionFactor>
+            <maximumDuration>0</maximumDuration>
+        </suspendOnFailure>
+        <markForSuspension>
+            <errorCodes>-1</errorCodes>
+        </markForSuspension>
+    </default>
+</endpoint>

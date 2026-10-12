@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One log line per stage (REQUEST_IN, BACKEND_CALL, RESPONSE_OUT).
+     Masking by design: callers pass only whitelisted, pre-masked values in 'detail'
+     (account number as last 4 digits, customer ID, status codes). Bodies are never logged. -->
+<template name="Common_MaskedLog" xmlns="http://ws.apache.org/ns/synapse">
+    <parameter name="stage"/>
+    <parameter name="detail"/>
+    <sequence>
+        <log level="custom" category="INFO" separator=" ">
+            <property name="stage" expression="$func:stage"/>
+            <property name="api" expression="get-property('apiName')"/>
+            <property name="correlationId" expression="get-property('correlationId')"/>
+            <property name="detail" expression="$func:detail"/>
+        </log>
+    </sequence>
+</template>

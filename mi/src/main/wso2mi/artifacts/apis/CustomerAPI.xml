@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 1b. GET /customers/{customerId}: managed proxy to the mock customer system.
+     Gateway value: correlation ID injected or propagated, internal headers stripped both ways,
+     5 s timeout (504), fault sequence for an unreachable backend (503), 404 and 5xx mapping. -->
+<api name="CustomerAPI" context="/customers" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/{customerId}" faultSequence="Common_FaultSeq">
+        <inSequence>
+            <property name="apiName" value="CustomerAPI" scope="default" type="STRING"/>
+            <sequence key="Common_InSeq"/>
+            <sequence key="Common_HeaderHygiene"/>
+            <call-template target="Common_MaskedLog">
+                <with-param name="stage" value="REQUEST_IN"/>
+                <with-param name="detail" value="{concat('method=GET customerId=', $ctx:uri.var.customerId)}"/>
+            </call-template>
+            <filter source="$ctx:uri.var.customerId" regex="[0-9]{1,10}">
+                <then>
+                    <property name="REST_URL_POSTFIX" scope="axis2" action="remove"/>
+                    <property name="HTTP_METHOD" value="GET" scope="axis2" type="STRING"/>
+                    <property name="NO_ENTITY_BODY" value="true" scope="axis2" type="BOOLEAN"/>
+                    <header name="Accept" scope="transport" value="application/json"/>
+                    <header name="To" expression="concat(get-property('system', 'customer.backend.url'), '/customers/', $ctx:uri.var.customerId)"/>
+                    <call-template target="Common_MaskedLog">
+                        <with-param name="stage" value="BACKEND_CALL"/>
+                        <with-param name="detail" value="{concat('backend=CustomerSystem customerId=', $ctx:uri.var.customerId)}"/>
+                    </call-template>
+                    <call>
+                        <endpoint key="CustomerBackendEP"/>
+                    </call>
+                    <filter source="$axis2:HTTP_SC" regex="2[0-9][0-9]">
+                        <then>
+                            <!-- Pass the body through; strip what the backend leaks -->
+                            <sequence key="Common_HeaderHygiene"/>
+                            <property name="messageType" value="application/json" scope="axis2" type="STRING"/>
+                            <header name="X-Correlation-ID" scope="transport" expression="get-property('correlationId')"/>
+                            <call-template target="Common_MaskedLog">
+                                <with-param name="stage" value="RESPONSE_OUT"/>
+                                <with-param name="detail" value="{concat('httpStatus=200 customerId=', $ctx:uri.var.customerId, ' latencyMs=', get-property('SYSTEM_TIME') - get-property('startTime'))}"/>
+                            </call-template>
+                            <respond/>
+                        </then>
+                        <else>
+                            <filter source="$axis2:HTTP_SC" regex="404">
+                                <then>
+                                    <call-template target="Common_ErrorResponse">
+                                        <with-param name="httpStatus" value="404"/>
+                                        <with-param name="code" value="CUSTOMER_NOT_FOUND"/>
+                                        <with-param name="message" value="No customer exists for the supplied customer ID."/>
+                                    </call-template>
+                                </then>
+                                <else>
+                                    <log level="custom" category="ERROR">
+                                        <property name="stage" value="BACKEND_ERROR"/>
+                                        <property name="api" value="CustomerAPI"/>
+                                        <property name="correlationId" expression="get-property('correlationId')"/>
+                                        <property name="backendStatus" expression="$axis2:HTTP_SC"/>
+                                    </log>
+                                    <call-template target="Common_ErrorResponse">
+                                        <with-param name="httpStatus" value="502"/>
+                                        <with-param name="code" value="BAD_GATEWAY"/>
+                                        <with-param name="message" value="The customer service returned an invalid response."/>
+                                    </call-template>
+                                </else>
+                            </filter>
+                        </else>
+                    </filter>
+                </then>
+                <else>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="400"/>
+                        <with-param name="code" value="VALIDATION_ERROR"/>
+                        <with-param name="message" value="The request is invalid."/>
+                        <with-param name="field" value="customerId"/>
+                        <with-param name="issue" value="must be numeric (1 to 10 digits)"/>
+                    </call-template>
+                </else>
+            </filter>
+        </inSequence>
+    </resource>
+</api>

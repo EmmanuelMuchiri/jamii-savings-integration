@@ -1,0 +1,60 @@
+# Jenkins configuration as code: no setup wizard, everything below exists on first start.
+jenkins:
+  systemMessage: "Jamii Savings Integration Platform CI"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+unclassified:
+  location:
+    url: "${JENKINS_URL:-http://localhost:8090/}"
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: "apim-admin-password"
+              description: "API Manager admin password"
+              secret: "${APIM_ADMIN_PASSWORD}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-token"
+              description: "GitHub user and personal access token (only needed for a private repo)"
+              username: "${GITHUB_USER:-none}"
+              password: "${GITHUB_TOKEN:-none}"
+          - string:
+              scope: GLOBAL
+              id: "h2-password"
+              description: "H2 application user password"
+              secret: "${H2_PASSWORD}"
+jobs:
+  - script: >
+      pipelineJob('jamii-savings-integration') {
+        description('Build, test and deploy all three Jamii APIs (MI + APIM) in one pipeline')
+        parameters {
+          booleanParam('PROMOTE_TO_PROD', false, 'Run the approval-gated prod stage (dry run)')
+          booleanParam('FORCE_FAIL_IMPORT', false, 'Demo: break one API import to prove there is no partial deploy and rollback runs')
+          booleanParam('NO_CACHE', false, 'Build every image from scratch (docker build --no-cache)')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url(System.getenv('JAMII_REPO_URL') ?: 'file:///src')
+                  if (System.getenv('GITHUB_TOKEN')) { credentials('github-token') }
+                }
+                branch(System.getenv('JAMII_REPO_BRANCH') ?: '*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+      }

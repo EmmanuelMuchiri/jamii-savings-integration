@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fault sequence for every resource. Classifies the error and returns the standard error body.
+     101504 = endpoint timeout; other 1015xx = connection/transport failures. -->
+<sequence name="Common_FaultSeq" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <log level="custom" category="ERROR">
+        <property name="stage" value="FAULT"/>
+        <property name="api" expression="get-property('apiName')"/>
+        <property name="correlationId" expression="get-property('correlationId')"/>
+        <property name="errorCode" expression="get-property('ERROR_CODE')"/>
+        <property name="errorMessage" expression="get-property('ERROR_MESSAGE')"/>
+    </log>
+    <filter source="get-property('ERROR_CODE')" regex="101504">
+        <then>
+            <call-template target="Common_ErrorResponse">
+                <with-param name="httpStatus" value="504"/>
+                <with-param name="code" value="BACKEND_TIMEOUT"/>
+                <with-param name="message" value="The backend service did not respond in time."/>
+            </call-template>
+        </then>
+        <else>
+            <filter source="get-property('ERROR_CODE')" regex="1015[0-9][0-9]">
+                <then>
+                    <call-template target="Common_ErrorResponse">
+                        <with-param name="httpStatus" value="503"/>
+                        <with-param name="code" value="BACKEND_UNAVAILABLE"/>
+                        <with-param name="message" value="The backend service is temporarily unavailable."/>
+                    </call-template>
+                </then>
+                <else>
+                    <filter source="get-property('ERROR_MESSAGE')" regex="(?s).*(JSON|Json|json|Unexpected character|Unterminated|parse|Parse).*">
+                        <then>
+                            <call-template target="Common_ErrorResponse">
+                                <with-param name="httpStatus" value="400"/>
+                                <with-param name="code" value="VALIDATION_ERROR"/>
+                                <with-param name="message" value="The request body is not valid JSON."/>
+                            </call-template>
+                        </then>
+                        <else>
+                            <call-template target="Common_ErrorResponse">
+                                <with-param name="httpStatus" value="500"/>
+                                <with-param name="code" value="INTERNAL_ERROR"/>
+                                <with-param name="message" value="An unexpected error occurred."/>
+                            </call-template>
+                        </else>
+                    </filter>
+                </else>
+            </filter>
+        </else>
+    </filter>
+</sequence>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Contract for the mock credit-check SOAP service (CheckEligibility). -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://jamii.daqiqtech.co.ke/credit/v1"
+           targetNamespace="http://jamii.daqiqtech.co.ke/credit/v1"
+           elementFormDefault="qualified">
+
+  <xs:element name="CheckEligibilityRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="customerId" type="xs:string"/>
+        <xs:element name="monthlyIncome" type="xs:decimal"/>
+        <xs:element name="existingMonthlyDebt" type="xs:decimal"/>
+        <xs:element name="requestedMonthlyInstalment" type="xs:decimal"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CheckEligibilityResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="customerId" type="xs:string"/>
+        <xs:element name="referenceId" type="xs:string"/>
+        <xs:element name="decision" type="tns:Decision"/>
+        <xs:element name="debtToIncomePercent" type="xs:int"/>
+        <xs:element name="maxAllowedPercent" type="xs:int"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="Decision">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ELIGIBLE"/>
+      <xs:enumeration value="NOT_ELIGIBLE"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

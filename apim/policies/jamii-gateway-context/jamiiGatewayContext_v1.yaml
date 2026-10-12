@@ -1,0 +1,18 @@
+type: operation_policy_specification
+version: v4.4.0
+data:
+  category: Mediation
+  name: jamiiGatewayContext
+  version: v1
+  displayName: Jamii Gateway Context
+  description: >-
+    Starts tracing at the edge and tells the backend which app called. Adds X-Correlation-ID
+    if the caller did not send one, adds X-Channel with the subscribing application's name, and
+    removes the Authorization header so tokens never reach the integration layer.
+  applicableFlows:
+    - request
+  supportedGateways:
+    - Synapse
+  supportedApiTypes:
+    - HTTP
+  policyAttributes: []
