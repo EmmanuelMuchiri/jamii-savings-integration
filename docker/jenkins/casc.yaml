@@ -51,7 +51,7 @@ jobs:
                   url(System.getenv('JAMII_REPO_URL') ?: 'file:///src')
                   if (System.getenv('GITHUB_TOKEN')) { credentials('github-token') }
                 }
-                branch(System.getenv('JAMII_REPO_BRANCH') ?: '*/main')
+                branch(System.getenv('JAMII_REPO_BRANCH') ?: '*/master')
               }
             }
             scriptPath('Jenkinsfile')
