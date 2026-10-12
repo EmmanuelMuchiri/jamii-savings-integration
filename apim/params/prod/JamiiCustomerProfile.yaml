@@ -1,0 +1,11 @@
+environments:
+- name: prod
+  configs:
+    endpoints:
+      production:
+        url: http://mi.internal.jamii.daqiqtech.co.ke:8290/customers
+      sandbox:
+        url: http://mi.internal.jamii.daqiqtech.co.ke:8290/customers
+    deploymentEnvironments:
+    - displayOnDevportal: true
+      deploymentEnvironment: Default
