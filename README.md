@@ -56,15 +56,15 @@ API Manager uses a self-signed certificate locally, so accept the browser warnin
 
 ## WhiteBoarding
 
-![WhiteBoarding](docs/diagrams/white-boarding.png)
+![WhiteBoarding](docs/screenshots/white-boarding.png)
 
-## Planning
+## Project Management
 
 ![Jira Plan](docs/screenshots/jira.png)
 
 ## Architecture
 
-![Architecture](docs/screenshots/architecture.png)
+![Architecture](docs/diagrams/architecture.png)
 
 Consumers call **API Manager** (security, throttling, the gateway policy, the Developer Portal). The gateway forwards to **Micro Integrator**, which does the integration work: a Data Service on H2 for balances, a managed proxy for customer profiles, and JSON-to-SOAP mediation for loan eligibility. MI is never exposed directly. **Jenkins** validates, tests, builds and deploys both layers as one release.
 
