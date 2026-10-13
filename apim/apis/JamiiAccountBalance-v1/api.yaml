@@ -2,7 +2,7 @@ type: api
 version: v4.4.0
 data:
   name: JamiiAccountBalance
-  description: Account balance and status (H2 via MI Data Service).
+  description: Account balances and status (H2 via MI Data Service).
   context: /jamii/accounts
   version: v1
   provider: admin

@@ -62,6 +62,7 @@ API Manager uses a self-signed certificate locally, so accept the browser warnin
 
 ![Jira Plan](docs/screenshots/jira.png)
 
+
 ## Architecture
 
 ![Architecture](docs/diagrams/architecture.png)
