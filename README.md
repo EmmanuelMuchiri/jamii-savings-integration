@@ -10,29 +10,49 @@ Three integrations for the fictional Jamii Savings bank, built on **WSO2 Micro I
 
 ## Live environment (VPS)
 
-Self-hosted on a Contabo VPS behind nginx (TLS at nginx, one subdomain per service, every container bound to `127.0.0.1`). **Status: deploying 12 Oct 2026.** Steps: [VPS deployment guide](docs/VPS-DEPLOYMENT.md). Until then, everything runs locally with one command (below).
+Self-hosted on a Contabo VPS behind nginx (TLS at nginx, one subdomain per service, every container bound to `127.0.0.1`). **Status: deploying 12 Oct 2026.** Steps: [VPS deployment guide](docs/VPS-DEPLOYMENT.md). 
 
 | Service | URL | Access |
 | --- | --- | --- |
 | API gateway | https://api.jamii.daqiqtech.co.ke | Public (OAuth2 or API key) |
 | Developer Portal | https://portal.jamii.daqiqtech.co.ke/devportal | Public; self sign-up, or a demo login shared separately |
-| Publisher / Admin | https://portal.jamii.daqiqtech.co.ke/publisher | IP allowlist + login |
-| Jenkins | https://jenkins.jamii.daqiqtech.co.ke | IP allowlist + login |
-| MI management API | https://mi.jamii.daqiqtech.co.ke/management | IP allowlist + login |
+| Publisher / Admin | https://portal.jamii.daqiqtech.co.ke/publisher | Public + login |
+| Jenkins | https://jenkins.jamii.daqiqtech.co.ke | Public + login |
+
 
 Example: `curl -H "Authorization: Bearer <token>" https://api.jamii.daqiqtech.co.ke/jamii/accounts/v1/0123456789/balance`
 
 ## Quick start: everything, end to end
 
-```bash
-cp .env.example .env              # set the passwords; COMPOSE_PROFILES=core is the default stack
-cd dist && sha256sum wso2mi-4.3.0.zip wso2am-4.4.0.zip > checksums.txt && cd ..
-scripts/up.sh
-```
+Prerequisites: Docker Desktop (Compose 2.24 or later) with 10–12 GB of memory.
 
-`scripts/up.sh` runs `docker compose up`, which builds and starts the mock backends, H2, MI and API Manager. Once API Manager is healthy, the one-shot `apim-init` container publishes the throttling tier, the three APIs, the API Product and the demo app, then runs the gateway checks. Its exit code is the result.
+1. **Clone the repository and check out `stage`:**
+   ```bash
+   git clone https://github.com/EmmanuelMuchiri/jamii-savings-integration.git
+   cd jamii-savings-integration && git checkout stage
+   ```
+2. **Download the WSO2 distributions** into `dist/`: **Micro Integrator 4.3.0** (`wso2mi-4.3.0.zip`) and **API Manager 4.4.0** (`wso2am-4.4.0.zip`). Then record their checksums:
+   ```bash
+   cd dist && sha256sum wso2mi-4.3.0.zip wso2am-4.4.0.zip > checksums.txt && cd ..
+   ```
+3. **Create the settings file:** `cp .env.example .env`
+4. **Start Jenkins:**
+   ```bash
+   docker compose --profile ci up -d --build jenkins
+   ```
+5. **Open Jenkins** at http://127.0.0.1:8090 and sign in with **admin / admin**.
+6. Open the **jamii-savings-integration** job and click **Build** (or **Build with Parameters → Build**). The first run takes about 15 minutes: it validates, tests, builds every image, deploys MI and API Manager, publishes the APIs, and runs 33 end-to-end checks.
 
-A plain `docker compose up -d --build` does the same; follow progress with `docker compose logs -f apim-init`. Re-publish at any time with `docker compose run --rm apim-init`.
+When the build is green:
+
+| | |
+| --- | --- |
+| Developer Portal | https://localhost:9443/devportal |
+| Publisher | https://localhost:9443/publisher |
+| Gateway | https://localhost:8243 |
+| Mock backends (Swagger UI) | http://localhost:8081/swagger-ui.html |
+
+API Manager uses a self-signed certificate locally, so accept the browser warning. Demo credentials (OAuth keys and an API key) are in `.apim-demo.env`; the Postman collection and a ready-made environment are in `docs/postman/`.
 
 ## Architecture
 
@@ -55,7 +75,7 @@ Consumers call **API Manager** (security, throttling, the gateway policy, the De
 
 ![Jenkins stage view](docs/screenshots/jenkins-stage-view.png)
 
-Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · Plan: [Jira plan](docs/jamii-jira-plan.xlsx)
+Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · Plan: [Jira plan](docs/screenshots/jira.png)
 
 ## Backend choices
 
@@ -101,127 +121,6 @@ The design document records 22 decisions (§ ADR log). The ones that shape the b
 | Customer Profile | Gold, Unlimited | Read-only lookup against the customer system |
 | Loan Eligibility | **LoanCheck10PerMin** (custom), Gold | Each call depends on an external credit engine with no SLA and up to 10 s latency, so it gets a tight, custom quota: 10 requests a minute per subscription. Over the quota the gateway returns 429. |
 | Retail Banking (product) | Gold | One subscription for Jamii's own channel apps |
-
-## How to run locally
-
-Prerequisites: Docker Desktop (Compose 2.24 or later) with 10–12 GB of memory, and the WSO2 zips (`wso2mi-4.3.0.zip`, `wso2am-4.4.0.zip`) in `dist/`. Nothing else: Maven, apictl, curl and jq all run inside containers.
-
-```bash
-cp .env.example .env                 # set the passwords
-cd dist && sha256sum wso2mi-4.3.0.zip wso2am-4.4.0.zip > checksums.txt && cd ..
-scripts/up.sh                        # build, start, publish and verify: about 10 minutes the first time
-```
-
-Then: Developer Portal https://localhost:9443/devportal · Publisher https://localhost:9443/publisher · gateway https://localhost:8243 · mock Swagger UI http://localhost:8081/swagger-ui.html. Demo credentials are written to `.apim-demo.env`.
-
-```bash
-. ./.apim-demo.env
-TOKEN=$(curl -sk -u "$CONSUMER_KEY:$CONSUMER_SECRET" -d grant_type=client_credentials $TOKEN_URL | jq -r .access_token)
-curl -sk -H "Authorization: Bearer $TOKEN" https://localhost:8243/jamii/accounts/v1/0123456789/balance
-curl -sk -H "ApiKey: $API_KEY" https://localhost:8243/jamii/customers/v1/1001
-curl -sk -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"customerId":"1001","monthlyIncome":120000,"existingMonthlyDebt":15000,"requestedMonthlyInstalment":25000}' \
-  https://localhost:8243/jamii/loans/v1/eligibility
-```
-
-## Run Micro Integrator locally
-
-2. Put the MI zip in `dist/` and record its checksum: `cd dist && sha256sum wso2mi-*.zip > checksums.txt`
-3. `cp .env.example .env` and set `MI_VERSION` to the version you downloaded, plus the H2 password.
-4. Build and start H2 and MI with MI's port 8290 exposed for testing:
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.debug.yml --profile core up -d --build h2 mi
-   docker compose logs -f mi        # wait for "WSO2 Micro Integrator started"
-   ```
-5. Run the smoke test: `scripts/mi-smoke.sh` (add `http://localhost:8290 --with-slow` to include the 504 timeouts).
-
-| Artifact | Purpose |
-| --- | --- |
-| `apis/BalanceAPI.xml` | 1a: H2 lookup via `AccountsDataService`, envelope, 400/404/503 |
-| `apis/CustomerAPI.xml` | 1b: managed proxy to the mock customer system, header hygiene, 404/502/503/504 |
-| `apis/LoanEligibilityAPI.xml` | 1c: JSON to SOAP `CheckEligibility` and back, fault mapping 422/502/503/504 |
-| `sequences/Common_InSeq.xml` | Correlation ID (reuse or generate), start time |
-| `sequences/Common_HeaderHygiene.xml` | Strips internal and server headers both ways |
-| `sequences/Common_FaultSeq.xml` | Classifies timeouts, connection failures, bad JSON, other errors |
-| `templates/Common_ErrorResponse.xml` | Standard error body, status, correlation header |
-| `templates/Common_MaskedLog.xml` | One masked log line per stage |
-| `data-services/AccountsDataService.dbs` | Parameterised query; DB settings from environment |
-
-## Run API Manager locally
-
-1. Put `wso2am-4.4.0.zip` in `dist/` and refresh the checksums: `cd dist && sha256sum wso2mi-4.3.0.zip wso2am-4.4.0.zip > checksums.txt`
-2. Set `APIM_VERSION=4.4.0`, `APIM_ADMIN_USER` and `APIM_ADMIN_PASSWORD` in `.env`.
-3. Build (the build log shows what the branding step changed), then start:
-   ```bash
-   docker compose build --progress=plain apim 2>&1 | grep configure:
-   docker compose -f docker-compose.yml -f docker-compose.debug.yml --profile core up -d apim
-   ```
-4. Open the Developer Portal at https://localhost:9443/devportal and the Publisher at https://localhost:9443/publisher (self-signed certificate warning expected).
-
-**Branding.** `docker/apim/branding/` holds the Jamii Savings theme: logos (full colour and white), favicon, landing banners, and theme overrides for the Developer Portal (`userTheme.js`), Publisher and Admin Portal (`userCustomThemes.js`). Palette: navy `#102E62`, green `#3B9B4A`, light green `#5BBE61`, dark green `#2F7F3E`, white `#FFFFFF`.
-
-## Publish the APIs
-
-Needs `curl`, `jq` and `apictl` 4.4 (`brew install jq`; apictl from the WSO2 API Controller download page).
-
-```bash
-scripts/apim-bootstrap.sh          # tier, 3 APIs, API Product, demo app + keys (safe to re-run)
-scripts/gateway-check.sh           # end-to-end checks through the gateway
-```
-
-| Artifact | Location |
-| --- | --- |
-| OpenAPI 3.0 specs (shared `ErrorResponse`) | `apim/apis/*/Definitions/swagger.yaml` |
-| apictl projects (security, tiers, endpoints, tile) | `apim/apis/*` |
-| Gateway policy `jamiiGatewayContext` (Balance API) | `apim/apis/JamiiAccountBalance-v1/Policies/` |
-| Endpoints per environment | `apim/params/{dev,prod}/*.yaml` |
-| Custom tier `LoanCheck10PerMin` | `apim/throttling/` |
-| API Product `JamiiRetailBanking` | `apim/products/JamiiRetailBanking/` |
-
-| API | Security | Tiers |
-| --- | --- | --- |
-| JamiiAccountBalance | OAuth2 | Gold, Unlimited |
-| JamiiCustomerProfile | API key | Gold, Unlimited |
-| JamiiLoanEligibility | OAuth2 | LoanCheck10PerMin, Gold |
-| JamiiRetailBanking (product) | OAuth2 | Gold |
-
-The API Product is version `1` and the default version, so it answers both with and without the version: `https://localhost:8243/jamii/retail-banking/{accountNumber}/balance` (or `/jamii/retail-banking/1/...`), `/jamii/retail-banking/{customerId}`, `/jamii/retail-banking/eligibility`. Note: a product left at API Manager's implicit version `1.0.0` was not served as the default version and its versioned route failed authentication (900900), so the version is set explicitly. It is used by its own application (`jamii-channel`); an application uses either the product or the individual APIs, never both.
-
-Loan eligibility gets a tighter tier because each call depends on a slow external credit engine with no SLA.
-
-## CI/CD: Jenkins
-
-```bash
-# .env: set JENKINS_ADMIN_PASSWORD (and JAMII_REPO_URL if you build from GitHub instead of this folder)
-docker compose --profile ci up -d --build jenkins
-```
-Open http://localhost:8090 and sign in. The job **jamii-savings-integration** already exists (configuration as code); press **Build with Parameters**. Jenkins checks out the committed state of this repo (`file:///src`, branch `main`) unless `JAMII_REPO_URL` points elsewhere. Locally, start builds by hand (**Build with Parameters**).
-
-**Push trigger (on the VPS).** Once GitHub can reach Jenkins, add `triggers { githubPush() }` to the `Jenkinsfile` (the `github` plugin is already in `docker/jenkins/plugins.txt`), then:
-
-1. In GitHub: **Settings → Webhooks → Add webhook**, payload URL `https://jenkins.jamii.daqiqtech.co.ke/github-webhook/`, content type `application/json`, **Just the push event**, with a webhook secret.
-2. Store the secret as a Jenkins credential and reference it in the GitHub plugin configuration (`casc.yaml`), so Jenkins rejects requests that are not signed by GitHub.
-3. In nginx, open only `/github-webhook/` to GitHub's webhook address ranges (published at `https://api.github.com/meta`, key `hooks`); the rest of Jenkins stays behind the IP allowlist.
-4. Set the Jenkins URL in `casc.yaml` to `https://jenkins.jamii.daqiqtech.co.ke/`.
-
-| Stage | What it does |
-| --- | --- |
-| Prepare | Copies the WSO2 zips from `dist/`; release tag = build number |
-| Validate | MI XML, the three OpenAPI specs and apictl projects (one loop over all APIs), shell scripts, compose config. Nothing is deployed unless everything validates |
-| Unit tests | Mock backends' 17 JUnit tests (Maven inside Docker), published as JUnit results |
-| Build images | mock-backends, H2, MI (artifacts baked in), API Manager, apim-init, all tagged with the build number |
-| Package APIM | The apictl projects archived as `jamii-apim-<tag>.tgz` |
-| Deploy dev | MI and its dependencies, then API Manager, then apim-init publishes tier, APIs, product and demo apps |
-| Test dev | MI smoke (19 checks incl. timeouts), gateway checks (14), and a check that no PII reaches MI logs |
-| Promote to prod | Only with `PROMOTE_TO_PROD`: manual approval, then a dry run of the prod imports |
-
-**Failure and rollback.** On any failure after deployment starts, the pipeline restores the last release that passed: the same images by tag, and its API definitions (re-imported by that release's apim-init). To demonstrate it, run once normally, then run with `FORCE_FAIL_IMPORT`: the Loan API points at a tier that does not exist, the import fails, and the previous release comes back.
-
-Jenkins runs as root with the host Docker socket mounted: acceptable for this local demo, not for a shared server.
-
-## Postman collection
-
-`docs/postman/` holds a collection covering every endpoint (APIM gateway, MI direct, MI management API, and the Spring Boot mock backends) with example responses, plus environments for localhost and the nginx hostnames. After `apim-bootstrap.sh` (or `apim-init`) has run, import the collection and **`docs/postman/Jamii-dev-localhost.generated.postman_environment.json`**: it already contains the demo apps' keys and API key (and is gitignored). Turn off SSL certificate verification (self-signed certificates) and run `0. Auth` first. The API Product requests use their own token (`jamii-channel`).
 
 ## Developer Portal: discover and subscribe
 
