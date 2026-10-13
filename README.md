@@ -75,7 +75,7 @@ Consumers call **API Manager** (security, throttling, the gateway policy, the De
 
 ![Jenkins stage view](docs/screenshots/jenkins-stage-view.png)
 
-Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · Plan: [Jira plan](docs/screenshots/jira.png)
+Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · WhiteBoarding: [White Boarding](docs/screenshots/white-boarding.png) · Plan: [Jira plan](docs/screenshots/jira.png)
 
 ## Backend choices
 
