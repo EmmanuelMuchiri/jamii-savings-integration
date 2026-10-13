@@ -54,9 +54,13 @@ When the build is green:
 
 API Manager uses a self-signed certificate locally, so accept the browser warning. Demo credentials (OAuth keys and an API key) are in `.apim-demo.env`; the Postman collection and a ready-made environment are in `docs/postman/`.
 
+## WhiteBoarding
+
+![WhiteBoarding](docs/diagrams/architecture.png)
+
 ## Architecture
 
-![Architecture](docs/diagrams/architecture.png)
+![Architecture](docs/screenshots/white-boarding.png)
 
 Consumers call **API Manager** (security, throttling, the gateway policy, the Developer Portal). The gateway forwards to **Micro Integrator**, which does the integration work: a Data Service on H2 for balances, a managed proxy for customer profiles, and JSON-to-SOAP mediation for loan eligibility. MI is never exposed directly. **Jenkins** validates, tests, builds and deploys both layers as one release.
 
@@ -75,7 +79,7 @@ Consumers call **API Manager** (security, throttling, the gateway policy, the De
 
 ![Jenkins stage view](docs/screenshots/jenkins-stage-view.png)
 
-Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · WhiteBoarding: [White Boarding](docs/screenshots/white-boarding.png) · Plan: [Jira plan](docs/screenshots/jira.png)
+Full design: [Solution Design Document](docs/Jamii_Savings_Solution_Design_v1.5.pdf) · Requirements: [BRD](docs/Jamii_Savings_BRD_v1.5.pdf) · Plan: [Jira plan](docs/screenshots/jira.png)
 
 ## Backend choices
 
